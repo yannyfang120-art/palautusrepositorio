@@ -10,7 +10,6 @@ class Player:
         self.goals = player_dict['goals']
         self.team = player_dict['team']
         self.games = player_dict['games']
-        self.id = player_dict.get('id')
 
     @property #kirjoitan palyer.points ilman sulkuja
     def points(self):
