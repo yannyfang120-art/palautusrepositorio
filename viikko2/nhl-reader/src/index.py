@@ -1,3 +1,5 @@
+"""Pelaajatilastojen tulostus."""
+
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
@@ -14,7 +16,9 @@ NATIONALITIES = ["USA", "FIN", "CAN", "SWE", "CZE", "RUS", "SLO", "FRA",
 
 console = Console()
 
+
 def show_table(season, nationality, players):
+    """Tulostaa pelaajat taulukkona."""
     table = Table(title=f"Season {season} players from {nationality}")
     table.add_column("name", style="cyan", no_wrap=True)
     table.add_column("team", style="magenta")
@@ -23,10 +27,17 @@ def show_table(season, nationality, players):
     table.add_column("points", justify="right", style="green")
 
     for player in players:
-        table.add_row(player.name, player.team, str(player.goals), str(player.assists), str(player.points))
+        table.add_row(
+            player.name,
+            player.team,
+            str(player.goals),
+            str(player.assists),
+            str(player.points)
+        )
     console.print(table)
 
 def main():
+    """Kysyy kauden ja maan sekä tulostaa tilastot."""
     season = Prompt.ask("Season", choices=SEASONS)
     url = f"https://studies.cs.helsinki.fi/nhlstats/{season}/players"
     stats = PlayerStats(PlayerReader(url))
@@ -38,17 +49,6 @@ def main():
             show_table(season, nationality, players)
     except KeyboardInterrupt:
         pass
-
-if __name__ == "__main__":
-    main()
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
