@@ -95,3 +95,45 @@ class TestKauppa(unittest.TestCase):
         self.kauppa.tilimaksu("pekka", "12345")
 
         self.pankki_mock.tilisiirto.assert_called_with("pekka", 42, "12345", "33333-44455", 5)
+
+    def test_aloita_asiointi_nollaa_edellisen_ostoksen_hinnan(self):
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        kutsut = self.pankki_mock.tilisiirto.call_args_list
+        self.assertEqual(kutsut[0].args[4], 5)
+        self.assertEqual(kutsut[1].args[4], 5)
+
+    def test_jokaiselle_maksulle_pyydetaan_uusi_viite(self):
+        self.viitegeneraattori_mock.uusi.side_effect = [1, 2]
+
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        self.assertEqual(self.viitegeneraattori_mock.uusi.call_count, 2)
+        kutsut = self.pankki_mock.tilisiirto.call_args_list
+        self.assertEqual(kutsut[0].args[1], 1)
+        self.assertEqual(kutsut[1].args[1], 2)
+
+    def test_tuotteen_poisto_korista_palauttaa_tuotteen_varastoon(self):
+        maito = Tuote(1, "maito", 5)
+        self.varasto_mock.hae_tuote.side_effect = None
+        self.varasto_mock.hae_tuote.return_value = maito
+
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.poista_korista(1)
+        self.kauppa.tilimaksu("pekka", "12345")
+
+        self.varasto_mock.palauta_varastoon.assert_called_with(maito)
+        self.pankki_mock.tilisiirto.assert_called_with("pekka", 42, "12345", "33333-44455", 0)
